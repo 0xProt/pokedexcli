@@ -20,7 +20,7 @@ func startRepl() {
 		}
 
 		commandName := words[0]
-		for _, cmd := range commandRegistry {
+		for _, cmd := range getCommands() {
 			if cmd.name == commandName {
 				cmd.callback()
 			}
