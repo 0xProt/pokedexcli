@@ -20,8 +20,11 @@ func startRepl() {
 		}
 
 		commandName := words[0]
-
-		fmt.Printf("Your command was: %s\n", commandName)
+		for _, cmd := range commandRegistry {
+			if cmd.name == commandName {
+				cmd.callback()
+			}
+		}
 	}
 }
 
