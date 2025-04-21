@@ -5,9 +5,17 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/0xProt/pokedexcli/pokeapi"
 )
 
-func startRepl() {
+type Config struct {
+	pokeapiClient    pokeapi.Client
+	nextLocationsUrl *string
+	prevLocationsUrl *string
+}
+
+func startRepl(cfg *Config) {
 	reader := bufio.NewScanner(os.Stdin)
 
 	for {
@@ -22,7 +30,7 @@ func startRepl() {
 		commandName := words[0]
 		command, exists := getCommands()[commandName]
 		if exists {
-			err := command.callback()
+			err := command.callback(cfg)
 			if err != nil {
 				fmt.Println(err)
 			}
