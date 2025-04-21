@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (c *Client) PokeGet(pageUrl *string) (PokeLocation, error) {
+func (c *Client) PokeGetLocation(pageUrl *string) (PokeLocation, error) {
 	url := baseURL + "/location-area"
 	if pageUrl != nil {
 		url = *pageUrl
@@ -40,5 +40,41 @@ func (c *Client) PokeGet(pageUrl *string) (PokeLocation, error) {
 	if err != nil {
 		return PokeLocation{}, err
 	}
+	c.cache.Add(url, body)
 	return location, nil
+}
+
+func (c *Client) PokeGetPokemon(locationName string) (WhichPokemonEncounters, error) {
+	url := baseURL + "/location-area/" + locationName
+
+	if val, ok := c.cache.Get(locationName); ok {
+		whichPokemon := WhichPokemonEncounters{}
+		err := json.Unmarshal(val, &whichPokemon)
+		if err != nil {
+			return WhichPokemonEncounters{}, err
+		}
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return WhichPokemonEncounters{}, err
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return WhichPokemonEncounters{}, err
+	}
+	defer resp.Body.Close()
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return WhichPokemonEncounters{}, err
+	}
+
+	whichPokemon := WhichPokemonEncounters{}
+	err = json.Unmarshal(data, &whichPokemon)
+	if err != nil {
+		return WhichPokemonEncounters{}, err
+	}
+	c.cache.Add(locationName, data)
+	return whichPokemon, nil
 }

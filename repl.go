@@ -28,9 +28,13 @@ func startRepl(cfg *Config) {
 		}
 
 		commandName := words[0]
+		argsValue := ""
+		if len(words) > 1 {
+			argsValue = words[1]
+		}
 		command, exists := getCommands()[commandName]
 		if exists {
-			err := command.callback(cfg)
+			err := command.callback(cfg, argsValue)
 			if err != nil {
 				fmt.Println(err)
 			}

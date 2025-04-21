@@ -9,16 +9,16 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*Config) error
+	callback    func(*Config, string) error
 }
 
-func commandExit(cfg *Config) error {
+func commandExit(cfg *Config, args string) error {
 	fmt.Print("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(cfg *Config) error {
+func commandHelp(cfg *Config, args string) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
 	fmt.Println("")
@@ -28,8 +28,8 @@ func commandHelp(cfg *Config) error {
 	return nil
 }
 
-func commandMap(cfg *Config) error {
-	locations, err := cfg.pokeapiClient.PokeGet(cfg.nextLocationsUrl)
+func commandMap(cfg *Config, args string) error {
+	locations, err := cfg.pokeapiClient.PokeGetLocation(cfg.nextLocationsUrl)
 	if err != nil {
 		fmt.Printf("error: %s", err)
 		return err
@@ -43,11 +43,11 @@ func commandMap(cfg *Config) error {
 	return nil
 }
 
-func commandMapBack(cfg *Config) error {
+func commandMapBack(cfg *Config, args string) error {
 	if cfg.prevLocationsUrl == nil {
 		return errors.New("you're on the first page of locations")
 	}
-	locations, err := cfg.pokeapiClient.PokeGet(cfg.prevLocationsUrl)
+	locations, err := cfg.pokeapiClient.PokeGetLocation(cfg.prevLocationsUrl)
 	if err != nil {
 		return err
 	}
@@ -55,6 +55,20 @@ func commandMapBack(cfg *Config) error {
 	cfg.prevLocationsUrl = locations.Previous
 	for _, loc := range locations.Results {
 		fmt.Println(loc.Name)
+	}
+	return nil
+}
+
+func commandExplore(cfg *Config, args string) error {
+	if args == "" {
+		return errors.New("explore requires a location area name as input")
+	}
+	pokemonList, err := cfg.pokeapiClient.PokeGetPokemon(args)
+	if err != nil {
+		return err
+	}
+	for _, pokemon := range pokemonList.PokemonEncounters {
+		fmt.Println(pokemon.Pokemon.Name)
 	}
 	return nil
 }
@@ -80,6 +94,11 @@ func getCommands() map[string]cliCommand {
 			name:        "mapb",
 			description: "Shows the previous 20 map locations",
 			callback:    commandMapBack,
+		},
+		"explore": {
+			name:        "explore",
+			description: "Explore a specific area to see its Pokemon",
+			callback:    commandExplore,
 		},
 	}
 }
