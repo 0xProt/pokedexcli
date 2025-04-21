@@ -53,7 +53,7 @@ func commandMap(cfg *Config) error {
 }
 
 func commandMapBack(cfg *Config) error {
-	if *cfg.prevLocationsUrl == "" {
+	if cfg.prevLocationsUrl == nil {
 		fmt.Println("You're on the first page of locations")
 		return nil
 	}
