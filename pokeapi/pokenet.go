@@ -7,31 +7,36 @@ import (
 	"net/http"
 )
 
-func PokeGet(pageUrl *string) ([]byte, error) {
+func (c *Client) PokeGet(pageUrl *string) (PokeLocation, error) {
 	url := baseURL + "/location-area"
 	if pageUrl != nil {
 		url = *pageUrl
 	}
 
+	if val, ok := c.cache.Get(url); ok {
+		location := PokeLocation{}
+		err := json.Unmarshal(val, &location)
+		if err != nil {
+			return PokeLocation{}, err
+		}
+	}
+
 	res, err := http.Get(url)
 	if err != nil {
-		return nil, err
+		return PokeLocation{}, err
 	}
 
 	body, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 	if res.StatusCode > 299 {
-		return nil, fmt.Errorf("response failed with status code: %d and \nbody: %s", res.StatusCode, body)
+		return PokeLocation{}, fmt.Errorf("response failed with status code: %d and \nbody: %s", res.StatusCode, body)
 	}
 	if err != nil {
-		return nil, err
+		return PokeLocation{}, err
 	}
-	return body, nil
-}
 
-func PokeUnmarshal(body []byte) (PokeLocation, error) {
 	location := PokeLocation{}
-	err := json.Unmarshal(body, &location)
+	err = json.Unmarshal(body, &location)
 	if err != nil {
 		return PokeLocation{}, err
 	}

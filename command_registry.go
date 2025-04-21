@@ -1,10 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
-
-	"github.com/0xProt/pokedexcli/pokeapi"
 )
 
 type cliCommand struct {
@@ -30,22 +29,14 @@ func commandHelp(cfg *Config) error {
 }
 
 func commandMap(cfg *Config) error {
-	body, err := pokeapi.PokeGet(cfg.nextLocationsUrl)
-	if err != nil {
-		fmt.Printf("error: %s", err)
-		return err
-	}
-	locations, err := pokeapi.PokeUnmarshal(body)
+	locations, err := cfg.pokeapiClient.PokeGet(cfg.nextLocationsUrl)
 	if err != nil {
 		fmt.Printf("error: %s", err)
 		return err
 	}
 	cfg.nextLocationsUrl = locations.Next
-	if locations.Previous == nil {
-		cfg.prevLocationsUrl = nil
-	} else {
-		cfg.prevLocationsUrl = locations.Previous
-	}
+	cfg.prevLocationsUrl = locations.Previous
+
 	for _, location := range locations.Results {
 		fmt.Printf("%s\n", location.Name)
 	}
@@ -54,27 +45,16 @@ func commandMap(cfg *Config) error {
 
 func commandMapBack(cfg *Config) error {
 	if cfg.prevLocationsUrl == nil {
-		fmt.Println("You're on the first page of locations")
-		return nil
+		return errors.New("you're on the first page of locations")
 	}
-	body, err := pokeapi.PokeGet(cfg.prevLocationsUrl)
+	locations, err := cfg.pokeapiClient.PokeGet(cfg.prevLocationsUrl)
 	if err != nil {
-		fmt.Printf("error: %s", err)
-		return err
-	}
-	locations, err := pokeapi.PokeUnmarshal(body)
-	if err != nil {
-		fmt.Printf("error: %s", err)
 		return err
 	}
 	cfg.nextLocationsUrl = locations.Next
-	if locations.Previous == nil {
-		cfg.prevLocationsUrl = nil
-	} else {
-		cfg.prevLocationsUrl = locations.Previous
-	}
-	for _, location := range locations.Results {
-		fmt.Printf("%s\n", location.Name)
+	cfg.prevLocationsUrl = locations.Previous
+	for _, loc := range locations.Results {
+		fmt.Println(loc.Name)
 	}
 	return nil
 }
