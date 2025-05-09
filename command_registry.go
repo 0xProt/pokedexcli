@@ -63,10 +63,12 @@ func commandExplore(cfg *Config, args string) error {
 	if args == "" {
 		return errors.New("explore requires a location area name as input")
 	}
+	fmt.Printf("Exploring %s...\n", args)
 	pokemonList, err := cfg.pokeapiClient.PokeGetPokemon(args)
 	if err != nil {
 		return err
 	}
+	fmt.Println("Found Pokemon:")
 	for _, pokemon := range pokemonList.PokemonEncounters {
 		fmt.Println(pokemon.Pokemon.Name)
 	}
