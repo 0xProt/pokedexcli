@@ -89,9 +89,51 @@ func commandCatch(cfg *Config, args string) error {
 	catchChance := rand.IntN(500)
 	if pokeStats.BaseExperience <= catchChance {
 		fmt.Printf("%s was caught!\n", args)
+		fmt.Print("You may now inspect it with the inspect command.\n")
 		cfg.caughtPokemon[pokeStats.Name] = pokeStats
 	} else {
 		fmt.Printf("%s escaped!\n", args)
+	}
+	return nil
+}
+
+func commandInspect(cfg *Config, args string) error {
+	if args == "" {
+		return errors.New("you must provide the name of a pokemon to inspect")
+	}
+
+	tar, ok := cfg.caughtPokemon[args]
+	if !ok {
+		fmt.Print("you have not caught that pokemon\n")
+	} else {
+
+		fmt.Printf("Name: %s\n", tar.Name)
+		fmt.Printf("Height: %d\n", tar.Height)
+		fmt.Print("Stats:\n")
+		for _, statEntry := range tar.Stats {
+			fmt.Printf("  -%s: %d\n", statEntry.Stat.Name, statEntry.BaseStat)
+		}
+		fmt.Print("Types:\n")
+		for _, typeEntry := range tar.Types {
+			fmt.Printf("  - %s\n", typeEntry.Type.Name)
+		}
+	}
+	return nil
+}
+
+func commandPokedex(cfg *Config, args string) error {
+	if args != "" {
+		return errors.New("pokedex doesn't need arguments, did you mean inspect?")
+	}
+
+	if len(cfg.caughtPokemon) == 0 {
+		fmt.Println("your pokedex is currently empty, catch pokemon using the catch command")
+		return nil
+	}
+
+	fmt.Println("Your Pokedex:")
+	for _, pokedexEntry := range cfg.caughtPokemon {
+		fmt.Printf("  - %s\n", pokedexEntry.Name)
 	}
 	return nil
 }
@@ -127,6 +169,16 @@ func getCommands() map[string]cliCommand {
 			name:        "catch",
 			description: "Attempt to catch a specific Pokemon",
 			callback:    commandCatch,
+		},
+		"inspect": {
+			name:        "inspect",
+			description: "See stats for a specific caught Pokemon",
+			callback:    commandInspect,
+		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "Check your pokedex to see your caught Pokemon",
+			callback:    commandPokedex,
 		},
 	}
 }
